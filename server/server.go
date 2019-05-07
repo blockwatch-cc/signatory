@@ -47,19 +47,6 @@ func (server *Server) sign(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 
-	// Must begin and end with quotes
-	opString := strings.TrimSpace(string(body))
-	if !strings.HasPrefix(opString, "\"") || !strings.HasSuffix(opString, "\"") {
-		return
-	}
-	opString = strings.Trim(opString, "\"")
-
-	// Must be valid hex chars
-	parsedHex, err := hex.DecodeString(opString)
-	if err != nil {
-		return
-	}
-
 	if err != nil {
 		log.Error("Error reading POST content: ", err)
 
@@ -67,6 +54,23 @@ func (server *Server) sign(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "{\"error\":\"%s\"}", "error reading the request")
 		return
 	}
+
+	opString := strings.TrimSpace(string(body))
+	if !strings.HasPrefix(opString, "\"") || !strings.HasSuffix(opString, "\"") {
+		return
+	}
+	opString = strings.Trim(opString, "\"")
+
+	parsedHex, err := hex.DecodeString(opString)
+
+	if err != nil {
+		log.Error("Error reading decoding content", err)
+
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "{\"error\":\"%s\"}", "error reading decoding content")
+		return
+	}
+
 	signed, err := server.signatory.Sign(requestedKeyHash, parsedHex)
 
 	if err != nil {

@@ -149,12 +149,16 @@ func TestParseUnsignedMessage(t *testing.T) {
 
 	var cases = []testCase{
 		{
-
 			data: mustHex("029caecab9c1f5142a0e842be39063c79c6d8952fd74f7957e1d471ffe14bb45c0faa130200000058213"),
 			op: &UnsignedEndorsement{
 				ChainID: "NetXjD3HPJJjmcd",
-				OpEndorsement: OpEndorsement{
-					Level: 360979,
+				UnsignedOperation: UnsignedOperation{
+					Branch: "BMBhiTEp4X5mqqHJPFUK87GoV3ojoABGyqgDSQnUhJtVtwa3zdi",
+					Contents: []OperationContents{
+						&OpEndorsement{
+							Level: 360979,
+						},
+					},
 				},
 			},
 		},

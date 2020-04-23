@@ -713,14 +713,21 @@ func (u *UnsignedBlockHeader) GetChainID() string { return u.ChainID }
 // UnsignedEndorsement represents unsigned endorsement
 type UnsignedEndorsement struct {
 	ChainID string
-	OpEndorsement
+	UnsignedOperation
 }
 
 // MessageKind returns unsigned message kind name i.e. "endorsement"
 func (u *UnsignedEndorsement) MessageKind() string { return "endorsement" }
 
 // GetLevel returns block level
-func (u *UnsignedEndorsement) GetLevel() int32 { return u.Level }
+func (u *UnsignedEndorsement) GetLevel() int32 {
+	if len(u.Contents) >= 0 {
+		if op, ok := u.Contents[0].(*OpEndorsement); ok {
+			return op.Level
+		}
+	}
+	return 0
+}
 
 // GetChainID returns chain ID
 func (u *UnsignedEndorsement) GetChainID() string { return u.ChainID }
@@ -742,7 +749,7 @@ func ParseUnsignedMessage(data []byte) (u UnsignedMessage, err error) {
 	}
 
 	switch t {
-	case wmBlockHeader, wmEndorsement:
+	case wmBlockHeader:
 		b, err := getBytes(&buf, 4)
 		if err != nil {
 			return nil, err
@@ -751,31 +758,32 @@ func ParseUnsignedMessage(data []byte) (u UnsignedMessage, err error) {
 		if err != nil {
 			return nil, err
 		}
-		switch t {
-		case wmBlockHeader:
-			bh, err := parseBlockHeader(&buf)
-			if err != nil {
-				return nil, err
-			}
-			return &UnsignedBlockHeader{
-				ChainID:     chainID,
-				BlockHeader: *bh,
-			}, nil
-
-		case wmEndorsement:
-			// level is the last 4 bytes
-			l := buf[len(buf)-4:]
-			level, err := getInt32(&l)
-			if err != nil {
-				return nil, err
-			}
-			return &UnsignedEndorsement{
-				ChainID: chainID,
-				OpEndorsement: OpEndorsement{
-					Level: level,
-				},
-			}, nil
+		bh, err := parseBlockHeader(&buf)
+		if err != nil {
+			return nil, err
 		}
+		return &UnsignedBlockHeader{
+			ChainID:     chainID,
+			BlockHeader: *bh,
+		}, nil
+
+	case wmEndorsement:
+		b, err := getBytes(&buf, 4)
+		if err != nil {
+			return nil, err
+		}
+		chainID, err := encodeBase58(pChainID, b)
+		if err != nil {
+			return nil, err
+		}
+		ops, err := parseUnsignedOperation(&buf)
+		if err != nil {
+			return nil, err
+		}
+		return &UnsignedEndorsement{
+			ChainID:           chainID,
+			UnsignedOperation: *ops,
+		}, nil
 	case wmGenericOperation:
 		return parseUnsignedOperation(&buf)
 	}

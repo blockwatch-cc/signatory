@@ -12,6 +12,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.7.3
 	github.com/karalabe/hid v1.0.0
+	github.com/miekg/pkcs11 v1.1.1-0.20220104135131-d721e3fc6d90
 	github.com/prometheus/client_golang v1.0.0
 	github.com/segmentio/ksuid v1.0.2
 	github.com/sirupsen/logrus v1.8.1

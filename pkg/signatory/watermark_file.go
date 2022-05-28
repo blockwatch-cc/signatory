@@ -116,7 +116,7 @@ func (f *FileWatermark) IsSafeToSign(pkh string, hash []byte, msg tezos.Unsigned
 		Hash:  ench,
 	}
 
-	fd, err = os.Create(filename)
+	fd, err = os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC|os.O_SYNC, 0600)
 	if err != nil {
 		return err
 	}
